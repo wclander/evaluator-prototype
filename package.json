@@ -1,0 +1,28 @@
+{
+  "name": "myexpressapp",
+  "version": "0.0.0",
+  "private": true,
+  "watches": {
+    "sass": "sass/**"
+  },
+  "scripts": {
+    "build": "node-sass sass/ -o public/stylesheets/ && npx babel react --out-dir public/javascripts",
+    "start": " node ./bin/www"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "morgan": "~1.9.1",
+    "node-sass": "^6.0.1",
+    "pug": "2.0.0-beta11",
+    "scss": "^0.2.4"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.14.8",
+    "@babel/core": "^7.14.8",
+    "@babel/preset-react": "^7.14.5",
+    "babel-preset-react-app": "^3.1.2"
+  }
+}

@@ -1,0 +1,53 @@
+@mixin rounded-box($color) {
+  margin: 5px;
+  border: 5px solid $color {
+    radius: 10px;
+  }
+  background-color: $color;
+  //white-space: nowrap;
+}
+
+@mixin text-box($color) {
+  @include rounded-box($color);
+  //max-height: 1em;
+}
+
+.info-box {
+  @include rounded-box(#AAAAFA);
+  display: float;
+  position: relative;
+  z-index: 1000;
+}
+
+.normal-text {
+  margin: {
+    top: 10px;
+    bottom: 10px;
+  }
+}
+
+.container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.negative {
+  @include text-box(red);
+}
+
+.neutral {
+  @include text-box(lightGray);
+}
+
+.positive {
+  @include text-box(green);
+}
+
+.highlight {
+  @include text-box(yellow);
+}
+
+.hover {
+  margin: 1px;
+  border-width: 9px;
+}

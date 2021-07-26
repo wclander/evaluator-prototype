@@ -1,0 +1,8 @@
+{
+    "appService.zipIgnorePattern": [
+        "node_modules{,/**}",
+        ".vscode{,/**}"
+    ],
+    "appService.defaultWebAppToDeploy": "/subscriptions/cb7b8d5e-3a49-474b-b023-43327c37d626/resourceGroups/WEA-finance/providers/Microsoft.Web/sites/evaluator-prototype",
+    "appService.deploySubpath": "."
+}
