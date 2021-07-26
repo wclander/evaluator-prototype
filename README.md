@@ -12,4 +12,4 @@ To run: ```npm start```
 
 Should then appear at http://localhost:3000
 
-.
+
