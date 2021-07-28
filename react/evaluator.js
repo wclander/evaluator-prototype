@@ -44,8 +44,12 @@ class HighlightedText extends React.Component {
   render() {
     // React component to display inside of this object when state.displayMore is set
     var sideBox = false;
-    if (this.state.displayMore){
-      sideBox = <InfoBox text = {this.props.text}></InfoBox>
+    if (this.state.displayMore && this.props.orgs.length > 0){
+      let t = "";
+      this.props.orgs.forEach(org => {
+        t += org.name;
+      });
+      sideBox = <InfoBox text = {t}></InfoBox>
     }
     
     return (
@@ -90,7 +94,7 @@ class OutputText extends React.Component {
   }
 
   componentDidMount() {
-    classify_sentiment(this.props.text).then(data => this.setState({segments : split_sentiment(data.documents[0].sentences)}))
+    create_segments(this.props.text).then(sentences => this.setState({segments : sentences}));
   }
 
   render() {
@@ -133,7 +137,7 @@ class EntryForm extends React.Component {
 /**
  * Sends a request to Azure for sentiment analysis and returns the object given
  * @param {string} text 
- * @returns {Promise} Promise object containing the documents object from Azure
+ * @returns {Promise} Promise object containing the sentences object from Azure
  */
 async function classify_sentiment(text) {
   let key = "8f980e821f9f4a608d88300e272d471d";
@@ -158,20 +162,76 @@ async function classify_sentiment(text) {
   const response = await fetch('https://eastus.api.cognitive.microsoft.com/text/analytics/v3.0/sentiment', requestOptions);
   const data = await response.json();
 
-  return data;
+  return data.documents[0].sentences;
 }
 
 /**
- * Takes in a sentences list from Azure and creates a list of HighlightedText objects
- * @param {object} sentences 
+ * Takes in a string, splits it into sentences, categorized by sentiment and adds a sub-component for organization information
+ * @param {string} text 
  * @returns {Array.HighlightedText} list of react sentence objects
  */
-function split_sentiment(sentences){
+ async function create_segments(text){
+  const sentences = await classify_sentiment(text);
+  const orgs = await extract_organizations(text);
+
   let segments = sentences.map(sentence =>
-    <HighlightedText text = {sentence.text} key = {sentence.text} type = {sentence.sentiment}></HighlightedText>
+    <HighlightedText text = {sentence.text} key = {sentence.text} type = {sentence.sentiment} orgs = {contained_orgs(sentence.offset, sentence.length, orgs)}></HighlightedText>
   );
 
   return segments;
+}
+
+/**
+ * returns only the orgainizations between start and start + len
+ * @param {int} start 
+ * @param {int} len 
+ * @param {object} orgs 
+ * @returns {object} organizations mentioned in the bounds of the sentence
+ */
+function contained_orgs(start, len, orgs) {
+  return orgs.filter(org => (org.offset >= start && org.offset < start + len));
+}
+
+/**
+ * Sends a request to Azure for keyword extraction and returns the locations of any organizations
+ * @param {string} text 
+ * @returns {Promise} Promise object containing a list of objects, each with a name and an offset
+ */
+ async function extract_organizations(text) {
+  let key = "8f980e821f9f4a608d88300e272d471d";
+
+  const requestOptions = {
+      method: 'POST',
+      headers: { 
+          'Content-Type': 'application/json',
+          'Ocp-Apim-Subscription-Key': key
+      },
+      body: JSON.stringify({
+        "documents": [
+          {
+            "language": "en",
+            "id": "1",
+            "text": text
+          }
+        ]
+      })
+  };
+  
+  const response = await fetch('https://eastus.api.cognitive.microsoft.com/text/analytics/v3.0/entities/recognition/general', requestOptions);
+  const data = await response.json();
+
+  let entities = data.documents[0].entities;
+
+  let organizations = [];
+
+  // we only care about organizations with at least 0.6 confidence
+  entities.forEach(entity => {
+    if (entity.category === "Organization" && entity.confidenceScore > 0.6) {
+      organizations.push({"name":entity.text, "offset": entity.offset})
+    }
+  });
+
+  return organizations;
 }
 
 // example text for basic text
