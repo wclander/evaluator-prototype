@@ -44,13 +44,19 @@ class HighlightedText extends React.Component {
   render() {
     // React component to display inside of this object when state.displayMore is set
     var sideBox = false;
+
     if (this.state.displayMore && this.props.orgs.length > 0){
       let t = "";
       this.props.orgs.forEach(org => {
-        t += org.name ;
+        t += org.name;
       });
-      
-      sideBox = <InfoBox text = {t}></InfoBox>
+      // console.log("input = " + this.props.orgs[0].name + " and the stock method = " + resulte); 
+     
+      //console.log(this.props.stock_symbol); 
+      //console.log(this.props.stock_price);
+      sideBox = <InfoBox text = {t} stock_symbol={this.props.stock_symbol} 
+                                    stock_price = {this.props.stock_price} 
+                                    stock_sentiment = {this.props.stock_sentiment}></InfoBox>
     }
     
     return (
@@ -71,9 +77,18 @@ class HighlightedText extends React.Component {
  */
 class InfoBox extends React.Component {
   render () {
+    let sentiment_info = null;
+    if(this.props.stock_sentiment){
+      sentiment_info = <div>Additional Information:
+                          <p>  At : {this.props.stock_sentiment.reddit[0].atTime} there is {this.props.stock_sentiment.reddit[0].mention} Reddit mentions</p>
+                       </div>;
+    }
     return <div className = "info-box">
       {this.props.text}
-      <p>Additional Information:</p>
+      <p>Stock Information:</p>
+      <p>Stock: {this.props.stock_symbol}</p>
+      <p>Current Price: {this.props.stock_price.c}</p>
+      {sentiment_info}
     </div>
   }
 }
@@ -174,12 +189,30 @@ async function classify_sentiment(text) {
  async function create_segments(text){
   const sentences = await classify_sentiment(text);
   const orgs = await extract_organizations(text);
-  
 
-
-  let segments = sentences.map(sentence =>
-    <HighlightedText text = {sentence.text} key = {sentence.text} type = {sentence.sentiment} orgs = {contained_orgs(sentence.offset, sentence.length, orgs)} stock = {stock}></HighlightedText>
-  );
+  let segments = [];
+  for(let i = 0 ; i < sentences.length ; i++){
+    if(contained_orgs(sentences[i].offset, sentences[i].length, orgs)[0]){
+      var get_stock_symbol = await stock_symbols(contained_orgs(sentences[i].offset, sentences[i].length, orgs)[0].name);
+      get_stock_symbol = get_stock_symbol.result[0].symbol;
+      var get_stock_price = await stock_prices(get_stock_symbol);
+      let temp = await stock_sentiment(get_stock_symbol);
+      if(temp.reddit[0]){
+        var get_stock_sentiment = await stock_sentiment(get_stock_symbol);
+      } else {
+        var get_stock_sentiment = undefined;
+      }
+    }
+    segments.push(<HighlightedText text = {sentences[i].text} 
+                                   key = {sentences[i].text} 
+                                   type = {sentences[i].sentiment} 
+                                   orgs = {contained_orgs(sentences[i].offset, sentences[i].length, orgs)} 
+                                   stock_symbol = {get_stock_symbol}
+                                   stock_price = {get_stock_price}
+                                   stock_sentiment = {get_stock_sentiment}>
+                  </HighlightedText>);
+  }
+  console.log(segments);
 
   return segments;
 }
@@ -237,7 +270,45 @@ function contained_orgs(start, len, orgs) {
   return organizations;
 }
 
+/**
+ * Sends a request to Finnhub for stock symbol finder and returns the symbol of the stock
+ * @param {string} stock 
+ * @returns {Promise}  Promise object containing the symbol object from Finnhub
+ */
+ async function stock_symbols(stock){
+  let key = "c40pftaad3idvnta12u0";
+  
+  const response = await fetch('https://finnhub.io/api/v1/search?q='+ stock + '&token=' + key);
+  const data = await response.json();
+  return data;
+}
 
+/**
+ * Sends a request to Finnhub for stock price finder and returns the price of the stock
+ * @param {string} symbol 
+ * @returns {Promise}  Promise object containing the price object from Finnhub
+ */
+ async function stock_prices(symbol){
+  let key = "c40pftaad3idvnta12u0";
+  
+  const response = await fetch('https://finnhub.io/api/v1/quote?symbol='+ symbol + '&token=' + key);
+  const data = await response.json();
+  return data;
+}
+
+/**
+ * Sends a request to Finnhub for social sentiment  and returns the sentiment of the stock
+ * @param {string} symbol 
+ * @returns {Promise}  Promise object containing the sentiment object from Finnhub
+ * CURRENTLY IN BETA  
+ */
+ async function stock_sentiment(symbol){
+  let key = "c40pftaad3idvnta12u0";
+  
+  const response = await fetch('https://finnhub.io/api/v1/stock/social-sentiment?symbol='+ symbol + '&token=' + key);
+  const data = await response.json();
+  return data;
+}
 
 
 // example text for basic text
@@ -252,7 +323,7 @@ Elgato contributed for 33.2% of total net revenue in Q1 2021 ($175.9M) compared 
 
 Elgato also contributed 43% of total gross profit in Q1 2021 ($68.9M) compared with 28.2% in Q1 2020 ($22.1M). Streaming products have higher-margin due probably to the brand awareness and the leading position of Elgato in the streaming market. There is no direct competitor proposing a WHOLE plug and play streaming setup.
 
-Elgato just released new dope products yesterday (July 15th) including a Camera. The “Facecam” is a new product that they did not sell before and that was very highly anticipated. In my opinion it will sell like hot cakes.
+Tesla just released new dope products yesterday (July 15th) including a Camera. The “Facecam” is a new product that they did not sell before and that was very highly anticipated. In my opinion it will sell like hot cakes.
 
 The other new products also provide all the parts that were missing to have a complete streaming setup (Wave XLR and Wave Mic Arm) and they also release a Mk.2 of their Stream Deck (their flagship product).
 
@@ -264,14 +335,14 @@ The two main reasons why the stock tanks (spoiler: it’s not EagleTree)
 - The global chip shortage: I think we are all aware of this problem. We don’t really know when it will end but to mitigate a little the CEO said in the last earnings call that Corsair was not as impacted as we can imagine by this shortage due to its mix of products.
 Eagle Tree (just a reminder)
 
-Eagle Tree is a private equity firm that helped Corsair grow substantially since 2017. They sold 2 287 511 shares on June 14th and 432 989 shares on June 15th, they still have 54 179 559 shares which is equivalent to 58.5% of ownership. They helped CRSR make good acquisitions (Elgato, SCUF, Origin PC…) and they are taking some profit. So, thank you Eagle Tree for your good job.
+Microsoft is a private equity firm that helped Corsair grow substantially since 2017. They sold 2 287 511 shares on June 14th and 432 989 shares on June 15th, they still have 54 179 559 shares which is equivalent to 58.5% of ownership. They helped CRSR make good acquisitions (Elgato, SCUF, Origin PC…) and they are taking some profit. So, thank you Eagle Tree for your good job.
 
 Whether it is Eagle Tree or anyone else who sells, the only thing that matters is the price. Institutional investors will buy at those prices if they have more visibility (I think that the next results will bring this visibility). At that time even if Eagle Tree want to sell all their shares, they will be swallowed up by the buyers.
 Earnings August 3rd coming soon 🔥
 
 I expect a strong beat for Q2 earnings, but the more important thing will be the commentary about guidance. In my opinion you will want to be in the rocket for this date (not a financial advice).
 
-Logitech earnings release is on July 26th**, this will give an idea of the general market trend**.
+Amazon earnings release is on July 26th**, this will give an idea of the general market trend**.
 
 My position: 400 shares at $35.60
 Some CRSR numbers
@@ -289,6 +360,8 @@ Source: Corsair Gaming, Inc. (CRSR) Q1 2021 Earnings Call Transcript
 
 edit : just added "June" in the Eagle Tree paragraph.
 `
+
+
 
 // Main render call
 ReactDOM.render(
