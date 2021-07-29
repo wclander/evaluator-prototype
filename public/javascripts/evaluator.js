@@ -57,8 +57,14 @@ class HighlightedText extends React.Component {
       this.props.orgs.forEach(org => {
         t += org.name;
       });
+     // console.log("input = " + this.props.orgs[0].name + " and the stock method = " + resulte); 
+     
+     console.log(this.props.stock_symbol);
+     console.log(this.props.stock_price);
       sideBox = /*#__PURE__*/React.createElement(InfoBox, {
-        text: t
+        text: t,
+        stock_symbol: this.props.stock_symbol,
+        stock_price: this.props.stock_price
       });
     }
 
@@ -81,7 +87,10 @@ class InfoBox extends React.Component {
   render() {
     return /*#__PURE__*/React.createElement("div", {
       className: "info-box"
-    }, this.props.text, /*#__PURE__*/React.createElement("p", null, "Additional Information:"));
+    }, this.props.text, /*#__PURE__*/
+    React.createElement("p", null, "Additional Information:"),
+    React.createElement("p",null,"Stock: ",this.props.stock_symbol),
+    React.createElement("p",null,"Current Price: ",this.props.stock_price.c));
   }
 
 }
@@ -188,12 +197,23 @@ async function classify_sentiment(text) {
 async function create_segments(text) {
   const sentences = await classify_sentiment(text);
   const orgs = await extract_organizations(text);
-  let segments = sentences.map(sentence => /*#__PURE__*/React.createElement(HighlightedText, {
-    text: sentence.text,
-    key: sentence.text,
-    type: sentence.sentiment,
-    orgs: contained_orgs(sentence.offset, sentence.length, orgs)
-  }));
+  let segments = [];
+  for(let i = 0 ; i < sentences.length ; i++){
+    if(contained_orgs(sentences[i].offset, sentences[i].length, orgs)[0]){
+      get_stock_symbol = await stock_symbols(contained_orgs(sentences[i].offset, sentences[i].length, orgs)[0].name);
+      get_stock_symbol = get_stock_symbol.result[0].symbol;
+      get_stock_price = await stock_prices(get_stock_symbol);
+    }
+    segments.push(React.createElement(HighlightedText, {
+      text: sentences[i].text,
+      key: sentences[i].text,
+      type: sentences[i].sentiment,
+      orgs: contained_orgs(sentences[i].offset, sentences[i].length, orgs),
+      stock_symbol: get_stock_symbol,
+      stock_price: get_stock_price
+      }))
+  }
+  console.log(segments);
   return segments;
 }
 /**
@@ -246,6 +266,35 @@ async function extract_organizations(text) {
   });
   return organizations;
 }
+
+/**
+ * Sends a request to Finnhub for stock symbol finder and returns the symbol of the stock
+ * @param {string} stock 
+ * @returns {Promise}  Promise object containing the symbol object from Finnhub
+ */
+ async function stock_symbols(stock){
+  let key = "c40nioqad3idvnt9vua0";
+  
+  const response = await fetch('https://finnhub.io/api/v1/search?q='+ stock + '&token=' + key);
+  const data = await response.json();
+  return data;
+}
+
+/**
+ * Sends a request to Finnhub for stock price finder and returns the price of the stock
+ * @param {string} stock 
+ * @returns {Promise}  Promise object containing the price object from Finnhub
+ */
+ async function stock_prices(symbol){
+  let key = "c40nioqad3idvnt9vua0";
+  
+  const response = await fetch('https://finnhub.io/api/v1/quote?symbol='+ symbol + '&token=' + key);
+  const data = await response.json();
+  return data;
+}
+
+
+
 /**
  * Returns the risk of an equity
  * @param {string} equity
@@ -269,7 +318,7 @@ Elgato contributed for 33.2% of total net revenue in Q1 2021 ($175.9M) compared 
 
 Elgato also contributed 43% of total gross profit in Q1 2021 ($68.9M) compared with 28.2% in Q1 2020 ($22.1M). Streaming products have higher-margin due probably to the brand awareness and the leading position of Elgato in the streaming market. There is no direct competitor proposing a WHOLE plug and play streaming setup.
 
-Elgato just released new dope products yesterday (July 15th) including a Camera. The “Facecam” is a new product that they did not sell before and that was very highly anticipated. In my opinion it will sell like hot cakes.
+Tesla just released new dope products yesterday (July 15th) including a Camera. The “Facecam” is a new product that they did not sell before and that was very highly anticipated. In my opinion it will sell like hot cakes.
 
 The other new products also provide all the parts that were missing to have a complete streaming setup (Wave XLR and Wave Mic Arm) and they also release a Mk.2 of their Stream Deck (their flagship product).
 
@@ -279,16 +328,16 @@ The two main reasons why the stock tanks (spoiler: it’s not EagleTree)
 - The lack of guidance for S2 2021 and after: At the time of the Q1 2021 earnings call transcript we were still in the covid period, and it was difficult even for the CEO to predict if the gaming trend will continue in the same vein for S2 2021. This lack of guidance does not encourage institutional investors to buy more for the moment (in my heart I feel that we are on a strong and long-term trend). Q2 earning and commentary coming out on August 3rd will be decisive.
 
 - The global chip shortage: I think we are all aware of this problem. We don’t really know when it will end but to mitigate a little the CEO said in the last earnings call that Corsair was not as impacted as we can imagine by this shortage due to its mix of products.
-Eagle Tree (just a reminder)
+Eagle Tree (just a reminder).
 
-Eagle Tree is a private equity firm that helped Corsair grow substantially since 2017. They sold 2 287 511 shares on June 14th and 432 989 shares on June 15th, they still have 54 179 559 shares which is equivalent to 58.5% of ownership. They helped CRSR make good acquisitions (Elgato, SCUF, Origin PC…) and they are taking some profit. So, thank you Eagle Tree for your good job.
+Microsoft is a private equity firm that helped Corsair grow substantially since 2017. They sold 2 287 511 shares on June 14th and 432 989 shares on June 15th, they still have 54 179 559 shares which is equivalent to 58.5% of ownership. They helped CRSR make good acquisitions (Elgato, SCUF, Origin PC…) and they are taking some profit. So, thank you Eagle Tree for your good job.
 
 Whether it is Eagle Tree or anyone else who sells, the only thing that matters is the price. Institutional investors will buy at those prices if they have more visibility (I think that the next results will bring this visibility). At that time even if Eagle Tree want to sell all their shares, they will be swallowed up by the buyers.
 Earnings August 3rd coming soon 🔥
 
 I expect a strong beat for Q2 earnings, but the more important thing will be the commentary about guidance. In my opinion you will want to be in the rocket for this date (not a financial advice).
 
-Logitech earnings release is on July 26th**, this will give an idea of the general market trend**.
+Amazon earnings release is on July 26th**, this will give an idea of the general market trend**.
 
 My position: 400 shares at $35.60
 Some CRSR numbers
@@ -306,6 +355,8 @@ Source: Corsair Gaming, Inc. (CRSR) Q1 2021 Earnings Call Transcript
 
 edit : just added "June" in the Eagle Tree paragraph.
 `; // Main render call
+
+
 
 ReactDOM.render( /*#__PURE__*/React.createElement("div", {
   className: "container"

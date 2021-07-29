@@ -47,8 +47,9 @@ class HighlightedText extends React.Component {
     if (this.state.displayMore && this.props.orgs.length > 0){
       let t = "";
       this.props.orgs.forEach(org => {
-        t += org.name;
+        t += org.name ;
       });
+      
       sideBox = <InfoBox text = {t}></InfoBox>
     }
     
@@ -173,9 +174,11 @@ async function classify_sentiment(text) {
  async function create_segments(text){
   const sentences = await classify_sentiment(text);
   const orgs = await extract_organizations(text);
+  
+
 
   let segments = sentences.map(sentence =>
-    <HighlightedText text = {sentence.text} key = {sentence.text} type = {sentence.sentiment} orgs = {contained_orgs(sentence.offset, sentence.length, orgs)}></HighlightedText>
+    <HighlightedText text = {sentence.text} key = {sentence.text} type = {sentence.sentiment} orgs = {contained_orgs(sentence.offset, sentence.length, orgs)} stock = {stock}></HighlightedText>
   );
 
   return segments;
@@ -233,6 +236,9 @@ function contained_orgs(start, len, orgs) {
 
   return organizations;
 }
+
+
+
 
 // example text for basic text
 const sampleText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Metus aliquam eleifend mi in nulla posuere. Arcu dictum varius duis at. Mauris pharetra et ultrices neque ornare. Cursus eget nunc scelerisque viverra mauris. Aliquet risus feugiat in ante metus dictum at tempor commodo. Sed tesla dignissim sodales ut eu sem integer vitae. Tincidunt nunc pulvinar sapien et ligula ullamcorper. Velit ut tortor pretium viverra suspendisse potenti nullam. Id ornare arcu odio ut sem. Facilisis volutpat est velit egestas dui id ornare. A iaculis at erat pellentesque adipiscing commodo elit at imperdiet. Volutpat ac tincidunt vitae semper quis lectus. Neque ornare aenean euismod elementum. Quis auctor elit sed vulputate mi sit amet mauris commodo. Tellus rutrum tellus pellentesque eu.";
