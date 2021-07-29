@@ -50,22 +50,18 @@ class HighlightedText extends React.Component {
 
   render() {
     // React component to display inside of this object when state.displayMore is set
-    var sideBox = false;
+    let infoboxes = [];
 
-    if (this.state.displayMore && this.props.orgs.length > 0) {
-      let t = "";
-      this.props.orgs.forEach(org => {
-        t += org.name;
-      }); // console.log("input = " + this.props.orgs[0].name + " and the stock method = " + resulte); 
-      //console.log(this.props.stock_symbol); 
-      //console.log(this.props.stock_price);
-
-      sideBox = /*#__PURE__*/React.createElement(InfoBox, {
-        text: t,
-        stock_symbol: this.props.stock_symbol,
-        stock_price: this.props.stock_price,
-        stock_sentiment: this.props.stock_sentiment
-      });
+    if (this.state.displayMore && this.props.stock_symbol.length > 0) {
+      for (let i = 0; i < this.props.stock_symbol.length; i++) {
+        infoboxes.push( /*#__PURE__*/React.createElement(InfoBox, {
+          text: this.props.stock_symbol[i],
+          key: this.props.stock_symbol[i],
+          stock_symbol: this.props.stock_symbol[i],
+          stock_price: this.props.stock_price[i],
+          stock_sentiment: this.props.stock_sentiment[i]
+        }));
+      }
     }
 
     return /*#__PURE__*/React.createElement("span", {
@@ -73,7 +69,9 @@ class HighlightedText extends React.Component {
       onMouseEnter: this.hoverEnter,
       onMouseLeave: this.hoverLeave,
       onClick: this.onClick
-    }, this.props.text, sideBox);
+    }, this.props.text, /*#__PURE__*/React.createElement("div", {
+      className: "info"
+    }, infoboxes));
   }
 
 }
@@ -203,27 +201,38 @@ async function create_segments(text) {
   let segments = [];
 
   for (let i = 0; i < sentences.length; i++) {
-    if (contained_orgs(sentences[i].offset, sentences[i].length, orgs)[0]) {
-      var get_stock_symbol = await stock_symbols(contained_orgs(sentences[i].offset, sentences[i].length, orgs)[0].name);
-      get_stock_symbol = get_stock_symbol.result[0].symbol;
-      var get_stock_price = await stock_prices(get_stock_symbol);
-      let temp = await stock_sentiment(get_stock_symbol);
+    let get_stock_sentiments = [];
+    let get_stock_symbols = [];
+    let get_stock_prices = [];
+    let c_orgs = contained_orgs(sentences[i].offset, sentences[i].length, orgs);
+
+    for (let i = 0; i < c_orgs.length; i++) {
+      let stock_symbol = await stock_symbols(c_orgs[i].name);
+
+      if (!stock_symbol.result || stock_symbol.result.length == 0) {
+        continue;
+      }
+
+      get_stock_symbols.push(stock_symbol.result[0].symbol);
+      let get_stock_price = await stock_prices(stock_symbol.result[0].symbol);
+      get_stock_prices.push(get_stock_price);
+      let temp = await stock_sentiment(stock_symbol.result[0].symbol);
 
       if (temp.reddit[0]) {
-        var get_stock_sentiment = await stock_sentiment(get_stock_symbol);
+        get_stock_sentiments.push(temp);
       } else {
-        var get_stock_sentiment = undefined;
+        get_stock_sentiments.push(undefined);
       }
     }
 
     segments.push( /*#__PURE__*/React.createElement(HighlightedText, {
       text: sentences[i].text,
       key: sentences[i].text,
-      type: sentences[i].sentiment,
-      orgs: contained_orgs(sentences[i].offset, sentences[i].length, orgs),
-      stock_symbol: get_stock_symbol,
-      stock_price: get_stock_price,
-      stock_sentiment: get_stock_sentiment
+      type: sentences[i].sentiment //orgs = {contained_orgs(sentences[i].offset, sentences[i].length, orgs)} 
+      ,
+      stock_symbol: get_stock_symbols,
+      stock_price: get_stock_prices,
+      stock_sentiment: get_stock_sentiments
     }));
   }
 
@@ -368,7 +377,8 @@ TL; DR: It will moon sooner or later so Buy shares, don’t sell calls, no need 
 Source: Corsair Gaming, Inc. (CRSR) Q1 2021 Earnings Call Transcript
 
 edit : just added "June" in the Eagle Tree paragraph.
-`; // Main render call
+`;
+const minText = 'Microsoft and Google have reported high earnings this quarter.'; // Main render call
 
 ReactDOM.render( /*#__PURE__*/React.createElement("div", {
   className: "container"
