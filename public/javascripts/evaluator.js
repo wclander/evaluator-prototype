@@ -59,12 +59,13 @@ class HighlightedText extends React.Component {
       });
      // console.log("input = " + this.props.orgs[0].name + " and the stock method = " + resulte); 
      
-     console.log(this.props.stock_symbol);
-     console.log(this.props.stock_price);
+     //console.log(this.props.stock_symbol);
+     //console.log(this.props.stock_price);
       sideBox = /*#__PURE__*/React.createElement(InfoBox, {
         text: t,
         stock_symbol: this.props.stock_symbol,
-        stock_price: this.props.stock_price
+        stock_price: this.props.stock_price,
+        stock_sentiment: this.props.stock_sentiment
       });
     }
 
@@ -90,7 +91,9 @@ class InfoBox extends React.Component {
     }, this.props.text, /*#__PURE__*/
     React.createElement("p", null, "Additional Information:"),
     React.createElement("p",null,"Stock: ",this.props.stock_symbol),
-    React.createElement("p",null,"Current Price: ",this.props.stock_price.c));
+    React.createElement("p",null,"Current Price: ",this.props.stock_price.c),
+    React.createElement("div", null,"Social Sentiment:"),
+    React.createElement("p",null,"  At : " + this.props.stock_sentiment.reddit[0].atTime + " there is " + this.props.stock_sentiment.reddit[0].mention + " Reddit mentions"));
   }
 
 }
@@ -200,9 +203,14 @@ async function create_segments(text) {
   let segments = [];
   for(let i = 0 ; i < sentences.length ; i++){
     if(contained_orgs(sentences[i].offset, sentences[i].length, orgs)[0]){
-      get_stock_symbol = await stock_symbols(contained_orgs(sentences[i].offset, sentences[i].length, orgs)[0].name);
+      var get_stock_symbol = await stock_symbols(contained_orgs(sentences[i].offset, sentences[i].length, orgs)[0].name);
       get_stock_symbol = get_stock_symbol.result[0].symbol;
-      get_stock_price = await stock_prices(get_stock_symbol);
+      var get_stock_price = await stock_prices(get_stock_symbol);
+      let temp = await stock_sentiment(get_stock_symbol);
+      if(temp.reddit[0]){
+        var get_stock_sentiment = await stock_sentiment(get_stock_symbol);
+      }
+      console.log(get_stock_sentiment);
     }
     segments.push(React.createElement(HighlightedText, {
       text: sentences[i].text,
@@ -210,10 +218,11 @@ async function create_segments(text) {
       type: sentences[i].sentiment,
       orgs: contained_orgs(sentences[i].offset, sentences[i].length, orgs),
       stock_symbol: get_stock_symbol,
-      stock_price: get_stock_price
+      stock_price: get_stock_price,
+      stock_sentiment: get_stock_sentiment
       }))
   }
-  console.log(segments);
+  //console.log(segments);
   return segments;
 }
 /**
@@ -282,7 +291,7 @@ async function extract_organizations(text) {
 
 /**
  * Sends a request to Finnhub for stock price finder and returns the price of the stock
- * @param {string} stock 
+ * @param {string} symbol 
  * @returns {Promise}  Promise object containing the price object from Finnhub
  */
  async function stock_prices(symbol){
@@ -293,6 +302,19 @@ async function extract_organizations(text) {
   return data;
 }
 
+/**
+ * Sends a request to Finnhub for social sentiment  and returns the sentiment of the stock
+ * @param {string} symbol 
+ * @returns {Promise}  Promise object containing the sentiment object from Finnhub
+ * CURRENTLY IN BETA  
+ */
+ async function stock_sentiment(symbol){
+  let key = "c40nioqad3idvnt9vua0";
+  
+  const response = await fetch('https://finnhub.io/api/v1/stock/social-sentiment?symbol='+ symbol + '&token=' + key);
+  const data = await response.json();
+  return data;
+}
 
 
 /**
