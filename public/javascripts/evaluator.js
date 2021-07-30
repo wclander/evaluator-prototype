@@ -52,14 +52,12 @@ class HighlightedText extends React.Component {
     // React component to display inside of this object when state.displayMore is set
     let infoboxes = [];
 
-    if (this.state.displayMore && this.props.stock_symbol.length > 0) {
-      for (let i = 0; i < this.props.stock_symbol.length; i++) {
+    if (this.state.displayMore && this.props.orgs.length > 0) {
+      for (let i = 0; i < this.props.orgs.length; i++) {
         infoboxes.push( /*#__PURE__*/React.createElement(InfoBox, {
-          text: this.props.stock_symbol[i],
-          key: this.props.stock_symbol[i],
-          stock_symbol: this.props.stock_symbol[i],
-          stock_price: this.props.stock_price[i],
-          stock_sentiment: this.props.stock_sentiment[i]
+          text: this.props.orgs[i].text,
+          key: this.props.orgs[i].text + this.props.orgs[i].offset.toString(),
+          org: this.props.orgs[i]
         }));
       }
     }
@@ -82,18 +80,64 @@ class HighlightedText extends React.Component {
 
 
 class InfoBox extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      stock_sentiment: null,
+      stock_symbol: "",
+      stock_price: "",
+      loaded: false
+    };
+  }
+
+  componentDidMount() {
+    load_stock_info(this.props.org).then(stock_info => this.setState({
+      stock_sentiment: stock_info[2],
+      stock_symbol: stock_info[0],
+      stock_price: stock_info[1],
+      loaded: stock_info[0] ? true : false
+    }));
+  }
+
   render() {
     let sentiment_info = null;
 
-    if (this.props.stock_sentiment) {
-      sentiment_info = /*#__PURE__*/React.createElement("div", null, "Additional Information:", /*#__PURE__*/React.createElement("p", null, "  At : ", this.props.stock_sentiment.reddit[0].atTime, " there is ", this.props.stock_sentiment.reddit[0].mention, " Reddit mentions"));
+    if (this.state.stock_sentiment) {
+      sentiment_info = /*#__PURE__*/React.createElement("div", null, "Additional Information:", /*#__PURE__*/React.createElement("p", null, "  At : ", this.state.stock_sentiment.reddit[0].atTime, " there is ", this.state.stock_sentiment.reddit[0].mention, " Reddit mentions"));
     }
 
-    return /*#__PURE__*/React.createElement("div", {
-      className: "info-box"
-    }, this.props.text, /*#__PURE__*/React.createElement("p", null, "Stock Information:"), /*#__PURE__*/React.createElement("p", null, "Stock: ", this.props.stock_symbol), /*#__PURE__*/React.createElement("p", null, "Current Price: ", this.props.stock_price.c), sentiment_info);
+    let box = null;
+
+    if (this.state.loaded) {
+      box = /*#__PURE__*/React.createElement("div", {
+        className: "info-box"
+      }, this.props.text, /*#__PURE__*/React.createElement("p", null, "Stock Information:"), /*#__PURE__*/React.createElement("p", null, "Stock: ", this.state.stock_symbol), /*#__PURE__*/React.createElement("p", null, "Current Price: ", this.state.stock_price.c), sentiment_info);
+    } else {
+      box = /*#__PURE__*/React.createElement("div", {
+        className: "info-box"
+      }, this.props.text);
+    }
+
+    return box;
   }
 
+}
+
+async function load_stock_info(org) {
+  let symbol = await stock_symbols(org.name);
+
+  if (!symbol.result || symbol.result.length == 0) {
+    return ["", "", null];
+  }
+
+  let stock_price = await stock_prices(symbol.result[0].symbol);
+  let temp = await stock_sentiment(symbol.result[0].symbol);
+
+  if (temp && temp.reddit && temp.reddit[0]) {
+    return [symbol.result[0].symbol, stock_price, temp];
+  } else {
+    return [symbol.result[0].symbol, stock_price, null];
+  }
 }
 
 function NormalText(props) {
@@ -201,38 +245,11 @@ async function create_segments(text) {
   let segments = [];
 
   for (let i = 0; i < sentences.length; i++) {
-    let get_stock_sentiments = [];
-    let get_stock_symbols = [];
-    let get_stock_prices = [];
-    let c_orgs = contained_orgs(sentences[i].offset, sentences[i].length, orgs);
-
-    for (let i = 0; i < c_orgs.length; i++) {
-      let stock_symbol = await stock_symbols(c_orgs[i].name);
-
-      if (!stock_symbol.result || stock_symbol.result.length == 0) {
-        continue;
-      }
-
-      get_stock_symbols.push(stock_symbol.result[0].symbol);
-      let get_stock_price = await stock_prices(stock_symbol.result[0].symbol);
-      get_stock_prices.push(get_stock_price);
-      let temp = await stock_sentiment(stock_symbol.result[0].symbol);
-
-      if (temp.reddit[0]) {
-        get_stock_sentiments.push(temp);
-      } else {
-        get_stock_sentiments.push(undefined);
-      }
-    }
-
     segments.push( /*#__PURE__*/React.createElement(HighlightedText, {
       text: sentences[i].text,
       key: sentences[i].text,
-      type: sentences[i].sentiment //orgs = {contained_orgs(sentences[i].offset, sentences[i].length, orgs)} 
-      ,
-      stock_symbol: get_stock_symbols,
-      stock_price: get_stock_prices,
-      stock_sentiment: get_stock_sentiments
+      type: sentences[i].sentiment,
+      orgs: contained_orgs(sentences[i].offset, sentences[i].length, orgs)
     }));
   }
 
