@@ -105,7 +105,9 @@ class InfoBox extends React.Component {
     let sentiment_info = null;
 
     if (this.state.stock_sentiment) {
-      sentiment_info = /*#__PURE__*/React.createElement("div", null, "Additional Information:", /*#__PURE__*/React.createElement("p", null, "  At : ", this.state.stock_sentiment.reddit[0].atTime, " there is ", this.state.stock_sentiment.reddit[0].mention, " Reddit mentions"));
+      sentiment_info = /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+        className: "info-heading"
+      }, "Additional Information:"), /*#__PURE__*/React.createElement("p", null, "  At : ", this.state.stock_sentiment.reddit[0].atTime, " there is ", this.state.stock_sentiment.reddit[0].mention, " Reddit mentions"));
     }
 
     let box = null;
@@ -113,7 +115,9 @@ class InfoBox extends React.Component {
     if (this.state.loaded) {
       box = /*#__PURE__*/React.createElement("div", {
         className: "info-box"
-      }, this.props.text, /*#__PURE__*/React.createElement("p", null, "Stock Information:"), /*#__PURE__*/React.createElement("p", null, "Stock: ", this.state.stock_symbol), /*#__PURE__*/React.createElement("p", null, "Current Price: ", this.state.stock_price.c), /*#__PURE__*/React.createElement("p", null, "Price to Earnings Ratio: ", this.state.pe_ratio), sentiment_info);
+      }, this.props.text, /*#__PURE__*/React.createElement("h2", {
+        className: "info-heading"
+      }, "Stock Information:"), /*#__PURE__*/React.createElement("p", null, "Stock: ", this.state.stock_symbol), /*#__PURE__*/React.createElement("p", null, "Current Price: ", this.state.stock_price.c), /*#__PURE__*/React.createElement("p", null, "Price to Earnings Ratio: ", this.state.pe_ratio), sentiment_info);
     } else {
       box = /*#__PURE__*/React.createElement("div", {
         className: "info-box"

@@ -13,10 +13,11 @@
 }
 
 .info-box {
-  @include rounded-box(#AAAAFA);
+  @include rounded-box(#0064d8);
   display: float;
   position: relative;
   z-index: 1000;
+  color: white;
 }
 
 .normal-text {
@@ -24,6 +25,11 @@
     top: 10px;
     bottom: 10px;
   }
+}
+
+.info-heading {
+  font-weight: bold;
+  font-size: large;
 }
 
 .container {

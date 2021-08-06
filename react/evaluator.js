@@ -97,8 +97,9 @@ class InfoBox extends React.Component {
   render () {
     let sentiment_info = null;
     if(this.state.stock_sentiment){
-      sentiment_info = <div>Additional Information:
-                          <p>  At : {this.state.stock_sentiment.reddit[0].atTime} there is {this.state.stock_sentiment.reddit[0].mention} Reddit mentions</p>
+      sentiment_info = <div>
+                          <h2 className = "info-heading">Sentiment and rating Information:</h2>
+                          <p>  At : {this.state.stock_sentiment.reddit[0].atTime} there were {this.state.stock_sentiment.reddit[0].mention} social media (Reddit) mentions</p>
                        </div>;
     }
 
@@ -107,7 +108,7 @@ class InfoBox extends React.Component {
     if (this.state.loaded){
       box = <div className = "info-box">
       {this.props.text}
-      <p>Stock Information:</p>
+      <h2 className = "info-heading">Stock Information:</h2>
       <p>Stock: {this.state.stock_symbol}</p>
       <p>Current Price: {this.state.stock_price.c}</p>
       <p>Price to Earnings Ratio: {this.state.pe_ratio}</p>
