@@ -87,6 +87,7 @@ class InfoBox extends React.Component {
       stock_symbol: "",
       stock_price: "",
       pe_ratio: 0,
+      free_cash_flow_annual: 0,
       loaded: false
     };
   }
@@ -97,6 +98,7 @@ class InfoBox extends React.Component {
       stock_symbol: stock_info[0],
       stock_price: stock_info[1],
       pe_ratio: stock_info[3],
+      free_cash_flow_annual: stock_info[4],
       loaded: stock_info[0] ? true : false
     }));
   }
@@ -117,7 +119,7 @@ class InfoBox extends React.Component {
         className: "info-box"
       }, this.props.text, /*#__PURE__*/React.createElement("h2", {
         className: "info-heading"
-      }, "Stock Information:"), /*#__PURE__*/React.createElement("p", null, "Stock: ", this.state.stock_symbol), /*#__PURE__*/React.createElement("p", null, "Current Price: ", this.state.stock_price.c), /*#__PURE__*/React.createElement("p", null, "Price to Earnings Ratio: ", this.state.pe_ratio), sentiment_info);
+      }, "Stock Information:"), /*#__PURE__*/React.createElement("p", null, "Stock: ", this.state.stock_symbol), /*#__PURE__*/React.createElement("p", null, "Current Price: ", this.state.stock_price.c), /*#__PURE__*/React.createElement("p", null, "Price to Earnings Ratio: ", this.state.pe_ratio), /*#__PURE__*/React.createElement("p", null, "Free Cash Flow Annual: ", this.state.free_cash_flow_annual), sentiment_info);
     } else {
       box = /*#__PURE__*/React.createElement("div", {
         className: "info-box"
@@ -139,12 +141,14 @@ async function load_stock_info(org) {
   let symbol_string = symbol.result[0].symbol;
   let stock_price = await stock_prices(symbol_string);
   let temp = await stock_sentiment(symbol_string);
-  let pe_ratio = await get_fundamentals(symbol_string);
+  let fundamental_metric = await get_fundamentals(symbol_string);
+  let pe_ratio = fundamental_metric.peBasicExclExtraTTM;
+  let free_cash_flow_annual = fundamental_metric.freeCashFlowAnnual;
 
   if (temp && temp.reddit && temp.reddit[0]) {
-    return [symbol_string, stock_price, temp, pe_ratio];
+    return [symbol_string, stock_price, temp, pe_ratio, free_cash_flow_annual];
   } else {
-    return [symbol_string, stock_price, null, pe_ratio];
+    return [symbol_string, stock_price, null, pe_ratio, free_cash_flow_annual];
   }
 }
 
@@ -340,7 +344,7 @@ async function get_fundamentals(stock) {
   const data = await response.json();
 
   try {
-    return data.metric.peBasicExclExtraTTM;
+    return data.metric;
   } catch (ex) {
     return null;
   }
