@@ -121,7 +121,7 @@ class InfoBox extends React.Component {
         className: "info-box"
       }, this.props.text, /*#__PURE__*/React.createElement("h2", {
         className: "info-heading"
-      }, "Stock Information:"), /*#__PURE__*/React.createElement("p", null, "Stock: ", this.state.stock_symbol), /*#__PURE__*/React.createElement("p", null, "Current Price: ", this.state.stock_price.c), /*#__PURE__*/React.createElement("p", null, "Price to Earnings Ratio: ", this.state.pe_ratio), /*#__PURE__*/React.createElement("p", null, "Free annual cash flow: ", this.state.free_cash_flow_annual), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+      }, "Stock Information:"), /*#__PURE__*/React.createElement("p", null, "Stock: ", this.state.stock_symbol), /*#__PURE__*/React.createElement("p", null, "Current Price: ", Math.round((this.state.stock_price.c + Number.EPSILON) * 100) / 100, "$"), /*#__PURE__*/React.createElement("p", null, "Price to Earnings Ratio: ", Math.round((this.state.pe_ratio + Number.EPSILON) * 100) / 100, "x"), /*#__PURE__*/React.createElement("p", null, "Free annual cash flow: ", Math.round(((this.state.free_cash_flow_annual/100) + Number.EPSILON) * 100) / 100, "B"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
         className: "info-heading"
       }, "Sentiment and rating Information:"), /*#__PURE__*/React.createElement("p", null, "Wall street rating: ", this.state.rating_text, " with ", this.state.rating, " recommendations"), sentiment_info));
     } else {
