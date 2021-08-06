@@ -87,6 +87,8 @@ class InfoBox extends React.Component {
       stock_symbol: "",
       stock_price: "",
       pe_ratio: 0,
+      rating_text: "unkown",
+      rating: 0,
       loaded: false
     };
   }
@@ -97,6 +99,8 @@ class InfoBox extends React.Component {
       stock_symbol: stock_info[0],
       stock_price: stock_info[1],
       pe_ratio: stock_info[3],
+      rating_text: stock_info[4],
+      rating: stock_info[5],
       loaded: stock_info[0] ? true : false
     }));
   }
@@ -105,9 +109,7 @@ class InfoBox extends React.Component {
     let sentiment_info = null;
 
     if (this.state.stock_sentiment) {
-      sentiment_info = /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
-        className: "info-heading"
-      }, "Additional Information:"), /*#__PURE__*/React.createElement("p", null, "  At : ", this.state.stock_sentiment.reddit[0].atTime, " there is ", this.state.stock_sentiment.reddit[0].mention, " Reddit mentions"));
+      sentiment_info = /*#__PURE__*/React.createElement("p", null, "  At : ", this.state.stock_sentiment.reddit[0].atTime, " there were ", this.state.stock_sentiment.reddit[0].mention, " social media (Reddit) mentions");
     }
 
     let box = null;
@@ -117,7 +119,9 @@ class InfoBox extends React.Component {
         className: "info-box"
       }, this.props.text, /*#__PURE__*/React.createElement("h2", {
         className: "info-heading"
-      }, "Stock Information:"), /*#__PURE__*/React.createElement("p", null, "Stock: ", this.state.stock_symbol), /*#__PURE__*/React.createElement("p", null, "Current Price: ", this.state.stock_price.c), /*#__PURE__*/React.createElement("p", null, "Price to Earnings Ratio: ", this.state.pe_ratio), sentiment_info);
+      }, "Stock Information:"), /*#__PURE__*/React.createElement("p", null, "Stock: ", this.state.stock_symbol), /*#__PURE__*/React.createElement("p", null, "Current Price: ", this.state.stock_price.c), /*#__PURE__*/React.createElement("p", null, "Price to Earnings Ratio: ", this.state.pe_ratio), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
+        className: "info-heading"
+      }, "Sentiment and rating Information:"), /*#__PURE__*/React.createElement("p", null, "Wall street rating: ", this.state.rating_text, " with ", this.state.rating, " recommendations"), sentiment_info));
     } else {
       box = /*#__PURE__*/React.createElement("div", {
         className: "info-box"
@@ -140,9 +144,12 @@ async function load_stock_info(org) {
   let stock_price = await stock_prices(symbol_string);
   let temp = await stock_sentiment(symbol_string);
   let pe_ratio = await get_fundamentals(symbol_string);
+  let max_rating = await get_recommendation(symbol_string);
+  let rating = max_rating[1];
+  let rating_text = max_rating[0];
 
   if (temp && temp.reddit && temp.reddit[0]) {
-    return [symbol_string, stock_price, temp, pe_ratio];
+    return [symbol_string, stock_price, temp, pe_ratio, rating_text, rating];
   } else {
     return [symbol_string, stock_price, null, pe_ratio];
   }
@@ -343,6 +350,43 @@ async function get_fundamentals(stock) {
     return data.metric.peBasicExclExtraTTM;
   } catch (ex) {
     return null;
+  }
+}
+/**
+ * Sends a request to Finnhub for price to earning ratio and returns the ratio for the stock
+ * @param {string} stock 
+ * @returns {Promise}  Promise object containing the PE ratio from Finnhub
+ */
+
+
+async function get_recommendation(stock) {
+  let key = "c40pftaad3idvnta12u0";
+  const response = await fetch('https://finnhub.io/api/v1/stock/recommendation?symbol=' + stock + '&token=' + key);
+  const data_raw = await response.json();
+  data = data_raw[0];
+
+  try {
+    max_rating = 0;
+    max_rating_text = "none";
+
+    if (data.buy + data.strongBuy > max_rating) {
+      max_rating_text = "buy";
+      max_rating = data.buy + data.strongBuy;
+    }
+
+    if (data.sell + data.strongSell > max_rating) {
+      max_rating_text = "sell";
+      max_rating = data.sell + data.strongSell;
+    }
+
+    if (data.hold > max_rating) {
+      max_rating_text = "hold";
+      max_rating = data.hold;
+    }
+
+    return [max_rating_text, max_rating];
+  } catch (ex) {
+    return ["unknown", 0];
   }
 }
 /**

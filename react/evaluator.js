@@ -79,6 +79,8 @@ class InfoBox extends React.Component {
       stock_symbol: "",
       stock_price: "",
       pe_ratio: 0,
+      rating_text: "unkown", 
+      rating: 0,
       loaded: false
     };
   }
@@ -90,6 +92,8 @@ class InfoBox extends React.Component {
         stock_symbol: stock_info[0],
         stock_price: stock_info[1],
         pe_ratio: stock_info[3],
+        rating_text: stock_info[4], 
+        rating: stock_info[5],
         loaded: stock_info[0]? true : false
       }));
   }
@@ -97,10 +101,7 @@ class InfoBox extends React.Component {
   render () {
     let sentiment_info = null;
     if(this.state.stock_sentiment){
-      sentiment_info = <div>
-                          <h2 className = "info-heading">Sentiment and rating Information:</h2>
-                          <p>  At : {this.state.stock_sentiment.reddit[0].atTime} there were {this.state.stock_sentiment.reddit[0].mention} social media (Reddit) mentions</p>
-                       </div>;
+      sentiment_info = <p>  At : {this.state.stock_sentiment.reddit[0].atTime} there were {this.state.stock_sentiment.reddit[0].mention} social media (Reddit) mentions</p>;
     }
 
     let box = null;
@@ -112,7 +113,11 @@ class InfoBox extends React.Component {
       <p>Stock: {this.state.stock_symbol}</p>
       <p>Current Price: {this.state.stock_price.c}</p>
       <p>Price to Earnings Ratio: {this.state.pe_ratio}</p>
-      {sentiment_info}
+      <div>
+        <h2 className = "info-heading">Sentiment and rating Information:</h2>
+        <p>Wall street rating: {this.state.rating_text} with {this.state.rating} recommendations</p>
+        {sentiment_info}
+      </div>
     </div>;
     } else {
       box = <div className = "info-box">
@@ -137,8 +142,12 @@ async function load_stock_info(org){
 
   let pe_ratio = await get_fundamentals(symbol_string);
 
+  let max_rating = await get_recommendation(symbol_string);
+  let rating = max_rating[1];
+  let rating_text = max_rating[0];
+
   if(temp && temp.reddit && temp.reddit[0]){
-    return [symbol_string, stock_price, temp, pe_ratio];
+    return [symbol_string, stock_price, temp, pe_ratio, rating_text, rating];
   } else {
     return [symbol_string, stock_price, null, pe_ratio];
   }
@@ -335,6 +344,44 @@ function contained_orgs(start, len, orgs) {
     return data.metric.peBasicExclExtraTTM;
   } catch (ex) {
     return null;
+  }
+}
+
+/**
+ * Sends a request to Finnhub for price to earning ratio and returns the ratio for the stock
+ * @param {string} stock 
+ * @returns {Promise}  Promise object containing the PE ratio from Finnhub
+ */
+ async function get_recommendation(stock){
+  let key = "c40pftaad3idvnta12u0";
+  
+  const response = await fetch('https://finnhub.io/api/v1/stock/recommendation?symbol='+ stock + '&token=' + key);
+  const data_raw = await response.json();
+
+  data = data_raw[0];
+
+  try {
+    max_rating = 0;
+    max_rating_text = "none";
+
+    if (data.buy + data.strongBuy > max_rating) {
+      max_rating_text = "buy";
+      max_rating = data.buy + data.strongBuy;
+    }
+
+    if (data.sell + data.strongSell > max_rating) {
+      max_rating_text = "sell";
+      max_rating = data.sell + data.strongSell;
+    }
+
+    if (data.hold > max_rating) {
+      max_rating_text = "hold";
+      max_rating = data.hold;
+    }
+
+    return [max_rating_text, max_rating];
+  } catch (ex) {
+    return ["unknown", 0];
   }
 }
 
