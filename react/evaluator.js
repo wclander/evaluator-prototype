@@ -78,6 +78,7 @@ class InfoBox extends React.Component {
       stock_sentiment: null,
       stock_symbol: "",
       stock_price: "",
+      pe_ratio: 0,
       loaded: false
     };
   }
@@ -88,6 +89,7 @@ class InfoBox extends React.Component {
         stock_sentiment: stock_info[2],
         stock_symbol: stock_info[0],
         stock_price: stock_info[1],
+        pe_ratio: stock_info[3],
         loaded: stock_info[0]? true : false
       }));
   }
@@ -108,6 +110,7 @@ class InfoBox extends React.Component {
       <p>Stock Information:</p>
       <p>Stock: {this.state.stock_symbol}</p>
       <p>Current Price: {this.state.stock_price.c}</p>
+      <p>Price to Earnings Ratio: {this.state.pe_ratio}</p>
       {sentiment_info}
     </div>;
     } else {
@@ -126,13 +129,17 @@ async function load_stock_info(org){
     return ["","",null];
   }
 
-  let stock_price = await stock_prices(symbol.result[0].symbol);
-  let temp = await stock_sentiment(symbol.result[0].symbol);
+  let symbol_string = symbol.result[0].symbol;
+
+  let stock_price = await stock_prices(symbol_string);
+  let temp = await stock_sentiment(symbol_string);
+
+  let pe_ratio = await get_fundamentals(symbol_string);
 
   if(temp && temp.reddit && temp.reddit[0]){
-    return [symbol.result[0].symbol, stock_price, temp];
+    return [symbol_string, stock_price, temp, pe_ratio];
   } else {
-    return [symbol.result[0].symbol, stock_price, null];
+    return [symbol_string, stock_price, null, pe_ratio];
   }
 }
 
@@ -313,6 +320,24 @@ function contained_orgs(start, len, orgs) {
 }
 
 /**
+ * Sends a request to Finnhub for price to earning ratio and returns the ratio for the stock
+ * @param {string} stock 
+ * @returns {Promise}  Promise object containing the PE ratio from Finnhub
+ */
+ async function get_fundamentals(stock){
+  let key = "c40pftaad3idvnta12u0";
+  
+  const response = await fetch('https://finnhub.io/api/v1/stock/metric?metric=all&symbol='+ stock + '&token=' + key);
+  const data = await response.json();
+
+  try {
+    return data.metric.peBasicExclExtraTTM;
+  } catch (ex) {
+    return null;
+  }
+}
+
+/**
  * Sends a request to Finnhub for stock price finder and returns the price of the stock
  * @param {string} symbol 
  * @returns {Promise}  Promise object containing the price object from Finnhub
@@ -388,7 +413,7 @@ TL; DR: It will moon sooner or later so Buy shares, don’t sell calls, no need 
 Source: Corsair Gaming, Inc. (CRSR) Q1 2021 Earnings Call Transcript
 
 edit : just added "June" in the Eagle Tree paragraph.
-`
+`;
 
 const minText = 'Microsoft and Google have reported high earnings this quarter.';
 
