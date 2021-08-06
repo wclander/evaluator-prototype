@@ -81,6 +81,7 @@ class InfoBox extends React.Component {
       pe_ratio: 0,
       rating_text: "unkown", 
       rating: 0,
+      free_cash_flow_annual: 0,
       loaded: false
     };
   }
@@ -94,6 +95,7 @@ class InfoBox extends React.Component {
         pe_ratio: stock_info[3],
         rating_text: stock_info[4], 
         rating: stock_info[5],
+        free_cash_flow_annual: stock_info[6],
         loaded: stock_info[0]? true : false
       }));
   }
@@ -113,6 +115,7 @@ class InfoBox extends React.Component {
       <p>Stock: {this.state.stock_symbol}</p>
       <p>Current Price: {this.state.stock_price.c}</p>
       <p>Price to Earnings Ratio: {this.state.pe_ratio}</p>
+      <p>Free annual cash flow: {this.state.free_cash_flow_annual}</p>
       <div>
         <h2 className = "info-heading">Sentiment and rating Information:</h2>
         <p>Wall street rating: {this.state.rating_text} with {this.state.rating} recommendations</p>
@@ -140,16 +143,25 @@ async function load_stock_info(org){
   let stock_price = await stock_prices(symbol_string);
   let temp = await stock_sentiment(symbol_string);
 
-  let pe_ratio = await get_fundamentals(symbol_string);
+  let fundamental_metric = await get_fundamentals(symbol_string);
+  let pe_ratio = 0;
+  let free_cash_flow_annual = 0;
+
+  try {
+    pe_ratio = fundamental_metric.peBasicExclExtraTTM;
+    free_cash_flow_annual = fundamental_metric.freeCashFlowAnnual;
+  } catch (ex) {
+    // do nothing
+  }
 
   let max_rating = await get_recommendation(symbol_string);
   let rating = max_rating[1];
   let rating_text = max_rating[0];
 
   if(temp && temp.reddit && temp.reddit[0]){
-    return [symbol_string, stock_price, temp, pe_ratio, rating_text, rating];
+    return [symbol_string, stock_price, temp, pe_ratio, rating_text, rating, free_cash_flow_annual];
   } else {
-    return [symbol_string, stock_price, null, pe_ratio];
+    return [symbol_string, stock_price, null, pe_ratio, free_cash_flow_annual];
   }
 }
 
@@ -341,7 +353,7 @@ function contained_orgs(start, len, orgs) {
   const data = await response.json();
 
   try {
-    return data.metric.peBasicExclExtraTTM;
+    return data.metric;
   } catch (ex) {
     return null;
   }
@@ -361,8 +373,8 @@ function contained_orgs(start, len, orgs) {
   data = data_raw[0];
 
   try {
-    max_rating = 0;
-    max_rating_text = "none";
+    let max_rating = 0;
+    let max_rating_text = "unknown";
 
     if (data.buy + data.strongBuy > max_rating) {
       max_rating_text = "buy";
