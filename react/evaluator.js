@@ -228,7 +228,7 @@ class EntryForm extends React.Component {
  * @returns {Promise} Promise object containing the sentences object from Azure
  */
 async function classify_sentiment(text) {
-  let key = "8f980e821f9f4a608d88300e272d471d";
+  let key = "AZURE_SENTIMENT_KEY";
 
   const requestOptions = {
       method: 'POST',
@@ -292,7 +292,7 @@ function contained_orgs(start, len, orgs) {
  * @returns {Promise} Promise object containing a list of objects, each with a name and an offset
  */
  async function extract_organizations(text) {
-  let key = "8f980e821f9f4a608d88300e272d471d";
+  let key = "AZURE_TEXT_KEY";
 
   const requestOptions = {
       method: 'POST',
@@ -334,7 +334,7 @@ function contained_orgs(start, len, orgs) {
  * @returns {Promise}  Promise object containing the symbol object from Finnhub
  */
  async function stock_symbols(stock){
-  let key = "c40pftaad3idvnta12u0";
+  let key = "FINNHUB_KEY";
   
   const response = await fetch('https://finnhub.io/api/v1/search?q='+ stock + '&token=' + key);
   const data = await response.json();
@@ -347,7 +347,7 @@ function contained_orgs(start, len, orgs) {
  * @returns {Promise}  Promise object containing the PE ratio from Finnhub
  */
  async function get_fundamentals(stock){
-  let key = "c40pftaad3idvnta12u0";
+  let key = "FINNHUB_KEY";
   
   const response = await fetch('https://finnhub.io/api/v1/stock/metric?metric=all&symbol='+ stock + '&token=' + key);
   const data = await response.json();
@@ -365,7 +365,7 @@ function contained_orgs(start, len, orgs) {
  * @returns {Promise}  Promise object containing the PE ratio from Finnhub
  */
  async function get_recommendation(stock){
-  let key = "c40pftaad3idvnta12u0";
+  let key = "FINNHUB_KEY";
   
   const response = await fetch('https://finnhub.io/api/v1/stock/recommendation?symbol='+ stock + '&token=' + key);
   const data_raw = await response.json();
@@ -403,7 +403,7 @@ function contained_orgs(start, len, orgs) {
  * @returns {Promise}  Promise object containing the price object from Finnhub
  */
  async function stock_prices(symbol){
-  let key = "c40pftaad3idvnta12u0";
+  let key = "FINNHUB_KEY";
   
   const response = await fetch('https://finnhub.io/api/v1/quote?symbol='+ symbol + '&token=' + key);
   const data = await response.json();
@@ -417,7 +417,7 @@ function contained_orgs(start, len, orgs) {
  * CURRENTLY IN BETA  
  */
  async function stock_sentiment(symbol){
-  let key = "c40pftaad3idvnta12u0";
+  let key = "FINNHUB_KEY";
   
   const response = await fetch('https://finnhub.io/api/v1/stock/social-sentiment?symbol='+ symbol + '&token=' + key);
   const data = await response.json();
@@ -429,50 +429,8 @@ function contained_orgs(start, len, orgs) {
 const sampleText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Metus aliquam eleifend mi in nulla posuere. Arcu dictum varius duis at. Mauris pharetra et ultrices neque ornare. Cursus eget nunc scelerisque viverra mauris. Aliquet risus feugiat in ante metus dictum at tempor commodo. Sed tesla dignissim sodales ut eu sem integer vitae. Tincidunt nunc pulvinar sapien et ligula ullamcorper. Velit ut tortor pretium viverra suspendisse potenti nullam. Id ornare arcu odio ut sem. Facilisis volutpat est velit egestas dui id ornare. A iaculis at erat pellentesque adipiscing commodo elit at imperdiet. Volutpat ac tincidunt vitae semper quis lectus. Neque ornare aenean euismod elementum. Quis auctor elit sed vulputate mi sit amet mauris commodo. Tellus rutrum tellus pellentesque eu.";
 
 // example text for sentiment analysis
-const wsbText = `Elgato : the goose that lays golden eggs for CRSR
-
-Elgato is a Corsair subsidiary selling streaming equipment.
-
-Elgato contributed for 33.2% of total net revenue in Q1 2021 ($175.9M) compared with 24.6% in Q1 2020 ($75.9M). In my opinion it will soon be 50%+ of the total net revenue of CRSR considering the high rate of growth of this industry and its leading position in this booming market.
-
-Elgato also contributed 43% of total gross profit in Q1 2021 ($68.9M) compared with 28.2% in Q1 2020 ($22.1M). Streaming products have higher-margin due probably to the brand awareness and the leading position of Elgato in the streaming market. There is no direct competitor proposing a WHOLE plug and play streaming setup.
-
-Tesla just released new dope products yesterday (July 15th) including a Camera. The “Facecam” is a new product that they did not sell before and that was very highly anticipated. In my opinion it will sell like hot cakes.
-
-The other new products also provide all the parts that were missing to have a complete streaming setup (Wave XLR and Wave Mic Arm) and they also release a Mk.2 of their Stream Deck (their flagship product).
-
-With all these new products they are all set for a whole year at least and they are establishing their leadership in the streaming gear market once and for all. All the streamers/influencers will be talking about that in the next days.
-The two main reasons why the stock tanks (spoiler: it’s not EagleTree)
-
-- The lack of guidance for S2 2021 and after: At the time of the Q1 2021 earnings call transcript we were still in the covid period, and it was difficult even for the CEO to predict if the gaming trend will continue in the same vein for S2 2021. This lack of guidance does not encourage institutional investors to buy more for the moment (in my heart I feel that we are on a strong and long-term trend). Q2 earning and commentary coming out on August 3rd will be decisive.
-
-- The global chip shortage: I think we are all aware of this problem. We don’t really know when it will end but to mitigate a little the CEO said in the last earnings call that Corsair was not as impacted as we can imagine by this shortage due to its mix of products.
-Eagle Tree (just a reminder)
-
-Microsoft is a private equity firm that helped Corsair grow substantially since 2017. They sold 2 287 511 shares on June 14th and 432 989 shares on June 15th, they still have 54 179 559 shares which is equivalent to 58.5% of ownership. They helped CRSR make good acquisitions (Elgato, SCUF, Origin PC…) and they are taking some profit. So, thank you Eagle Tree for your good job.
-
-Whether it is Eagle Tree or anyone else who sells, the only thing that matters is the price. Institutional investors will buy at those prices if they have more visibility (I think that the next results will bring this visibility). At that time even if Eagle Tree want to sell all their shares, they will be swallowed up by the buyers.
-Earnings August 3rd coming soon 🔥
-
-I expect a strong beat for Q2 earnings, but the more important thing will be the commentary about guidance. In my opinion you will want to be in the rocket for this date (not a financial advice).
-
-Amazon earnings release is on July 26th**, this will give an idea of the general market trend**.
-
-My position: 400 shares at $35.60
-Some CRSR numbers
-
-    market cap: $2.8B
-    Revenue: $1.92B TTM
-    Gross Income: $540M TTM
-    Net Income: $149M TTM
-
-Conclusion
-
-TL; DR: It will moon sooner or later so Buy shares, don’t sell calls, no need to cover anything (this is obviously not a financial advice)
-
-Source: Corsair Gaming, Inc. (CRSR) Q1 2021 Earnings Call Transcript
-
-edit : just added "June" in the Eagle Tree paragraph.
+const sentimentText = `
+Example sentiment text containing stock tickers such as Microsoft and Google
 `;
 
 const minText = 'Microsoft and Google have reported high earnings this quarter.';
@@ -480,7 +438,7 @@ const minText = 'Microsoft and Google have reported high earnings this quarter.'
 // Main render call
 ReactDOM.render(
   <div className = "container">
-    <OutputText text={wsbText}/>
+    <OutputText text={sentimentText}/>
   </div>,
   document.getElementById('root')
 );
